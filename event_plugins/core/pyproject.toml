@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "davidia"
+dynamic = ["version"]
+description = "Plot server with React frontend data visualiser"
+readme = "README.md"
+license = "MIT"
+maintainers = [
+    {name = "Data Analysis group", email = "dataanalysis@diamond.ac.uk"}
+]
+classifiers = [
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+]
+requires-python = ">= 3.12"
+dependencies = [
+    "h5py",
+    "davidia",
+    "numpy"
+]
+
+[project.urls]
+repository = "https://github.com/DiamondLightSource/davidia-plugins"
+
+[tool.setuptools.dynamic]
+version = {attr = "davidia.__version__"} 
+
+[tool.setuptools.package-dir]
+"davidia" = "davidia"
+"davidia.demos" = "demos"
+
+[tool.setuptools.package-data]
+"*" = ["*.png"]
+
+[tool.pytest.ini_options]
+log_cli = true
+asyncio_default_fixture_loop_scope = "class"
+
+[tool.mypy]
+plugins = "numpy.typing.mypy_plugin"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+ignore = ["E501", "W505", "C408"]
+extend-select = ["I001"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
