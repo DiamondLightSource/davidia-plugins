@@ -15,7 +15,7 @@ import numpy as np
 from davidia.models.events import DavidiaEvent, SelectionEvent, TaskResult
 from davidia.models.messages import _BasePlotMessage
 from davidia.models.selections import SelectionBase
-from source_plugins.tasks_mgr import SimpleTaskManager
+from davidia.server.tasks_mgr import SimpleTaskManager
 
 DAVIDIA_PLUGINS = "davidia.plugins"
 
@@ -217,36 +217,50 @@ class SelectionEventPlugin(EventPlugin):
 
 
 class PluginTaskManager(SimpleTaskManager):
-    def __init__(self, callback: Callable[[Future[TaskResult]], None], max_workers=None):
-        super().__init__(callback, max_workers=max_workers,)
-        self.listoftasks:dict[tuple[SelectionEventPlugin,str],SelectionEvent]={}
-        self.locker=Lock()
+    def __init__(
+        self, callback: Callable[[Future[TaskResult]], None], max_workers=None
+    ):
+        super().__init__(
+            callback,
+            max_workers=max_workers,
+        )
+        self.listoftasks: dict[tuple[SelectionEventPlugin, str], SelectionEvent] = {}
+        self.locker = Lock()
         self._running: set[tuple[SelectionEventPlugin, str]] = set()
 
-    def submit_latest(self,key:tuple[SelectionEventPlugin,str],hook: EventPlugin, event: DavidiaEvent):
+    def submit_latest(
+        self,
+        key: tuple[SelectionEventPlugin, str],
+        hook: EventPlugin,
+        event: DavidiaEvent,
+    ):
 
-        fut = self.pool.submit(hook._process,event)
-        logger.debug(f"sent off: {hook._process,event} @ time: {time.perf_counter()}")
-        fut.add_done_callback(lambda future: self._check_finish(key,hook,future))
-        
-    def _check_finish(self,key:tuple[SelectionEventPlugin,str],hook: EventPlugin,future:Future[TaskResult]):
+        fut = self.pool.submit(hook._process, event)
+        logger.debug(f"sent off: {hook._process, event} @ time: {time.perf_counter()}")
+        fut.add_done_callback(lambda future: self._check_finish(key, hook, future))
+
+    def _check_finish(
+        self,
+        key: tuple[SelectionEventPlugin, str],
+        hook: EventPlugin,
+        future: Future[TaskResult],
+    ):
         self.callback(future)
         with self.locker:
-            next=self.listoftasks.pop(key,None)
+            next = self.listoftasks.pop(key, None)
             if next is None:
                 self._running.remove(key)
                 return
-        self.submit_latest(key,hook,next)
+        self.submit_latest(key, hook, next)
 
-
-    def add_task(self,hook: EventPlugin, event: DavidiaEvent) -> None:
+    def add_task(self, hook: EventPlugin, event: DavidiaEvent) -> None:
         if isinstance(hook, SelectionEventPlugin):
             assert isinstance(event, SelectionEvent)
             key = (hook, event.selection.id)
             with self.locker:
                 if key in self._running:
-                    self.listoftasks[key]=event
+                    self.listoftasks[key] = event
                     return
                 self._running.add(key)
-            self.submit_latest(key,hook,event)
+            self.submit_latest(key, hook, event)
         logger.debug(f"finished sending @ time: {time.perf_counter()}")
