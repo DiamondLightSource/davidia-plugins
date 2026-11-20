@@ -3,34 +3,39 @@ requires = ["setuptools>=75.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "davidia"
+name = "davidia-event-core"
 dynamic = ["version"]
-description = "Plot server with React frontend data visualiser"
+description = "Core event plugins for Davidia's PlotServer"
 readme = "README.md"
 license = "MIT"
 maintainers = [
-    {name = "Data Analysis group", email = "dataanalysis@diamond.ac.uk"}
+    { name = "Data Analysis group", email = "dataanalysis@diamond.ac.uk" },
 ]
 classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3 :: Only",
 ]
 requires-python = ">= 3.12"
-dependencies = [
-    "h5py",
-    "davidia",
-    "numpy"
-]
+dependencies = ["h5py", "davidia", "numpy"]
 
 [project.urls]
 repository = "https://github.com/DiamondLightSource/davidia-plugins"
 
 [tool.setuptools.dynamic]
-version = {attr = "davidia.__version__"} 
+version = { attr = "davidia.event.core.__version__" }
 
 [tool.setuptools.package-dir]
-"davidia" = "davidia"
-"davidia.demos" = "demos"
+"davidia.event" = "davidia.event_plugins"
+"davidia.source" = "davidia.source_plugins"
+
+[project.entry-points."davidia.plugins"]
+davidia-profile = "core.plugins:DavidiaProfilePlugin"
+davidia-box = "core.plugins:BoxProfilePlugin"
+davidia-axis = "core.plugins:AxisProfilePlugin"
+davidia-integration = "core.plugins:AxisIntegrationPlugin"
+davidia-sum = "core.plugins:IntersectionSumPlugin"
+davidia-nxs-source = "source_plugins.core.plugins:NXSImageSourcePlugin"
+
 
 [tool.setuptools.package-data]
 "*" = ["*.png"]
